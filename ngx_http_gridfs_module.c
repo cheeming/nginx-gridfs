@@ -490,7 +490,7 @@ static ngx_int_t ngx_http_mongo_add_connection(ngx_cycle_t* cycle, ngx_http_grid
 
     if ( gridfs_loc_conf->mongods->nelts == 1 ) {
         ngx_cpystrn( host, mongods[0].host.data, mongods[0].host.len + 1 );
-        status = mongo_connect( &mongo_conn->conn, (const char*)host, mongods[0].port );
+        status = mongo_connect( &mongo_conn->conn, (const char*)host, mongods[0].port, MONGO_SECONDARY_OK );
     } else if ( gridfs_loc_conf->mongods->nelts >= 2 && gridfs_loc_conf->mongods->nelts < 9 ) {
 
         /* Initiate replica set connection. */
@@ -501,7 +501,7 @@ static ngx_int_t ngx_http_mongo_add_connection(ngx_cycle_t* cycle, ngx_http_grid
             ngx_cpystrn( host, mongods[i].host.data, mongods[i].host.len + 1 );
             mongo_replset_add_seed( &mongo_conn->conn, (const char *)host, mongods[i].port );
         }
-        status = mongo_replset_connect( &mongo_conn->conn );
+        status = mongo_replset_connect( &mongo_conn->conn, MONGO_SECONDARY_OK );
     } else {
         ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
                           "Mongo Nginx Exception: Too many strings provided in 'mongo' directive.");
@@ -573,7 +573,7 @@ static ngx_int_t ngx_http_mongo_reconnect(ngx_log_t *log, ngx_http_mongo_connect
     if (&mongo_conn->conn.connected) { 
         mongo_disconnect(&mongo_conn->conn);
         ngx_msleep(MONGO_RECONNECT_WAITTIME);
-        status = mongo_reconnect(&mongo_conn->conn);
+        status = mongo_reconnect(&mongo_conn->conn, MONGO_SECONDARY_OK);
     } else {
         status = MONGO_CONN_FAIL;
     }
